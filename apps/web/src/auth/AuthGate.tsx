@@ -1,12 +1,21 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowRight, Command, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, UserRound } from 'lucide-react';
 import './auth.css';
 
 type AuthUser = { id: string; email: string; displayName: string };
 type AuthResponse = { data?: { user: AuthUser; accessToken: string }; error?: { message?: string } };
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:4000/api/v1';
+let refreshRequest: Promise<{ ok: boolean; payload: AuthResponse }> | null = null;
+const restoreSession = () => {
+  if (!refreshRequest) {
+    refreshRequest = fetch(`${API_BASE}/auth/refresh`, { method: 'POST', credentials: 'include' })
+      .then(async (response) => ({ ok: response.ok, payload: await response.json() as AuthResponse }))
+      .finally(() => { refreshRequest = null; });
+  }
+  return refreshRequest;
+};
 
-export default function AuthGate({ children }: { children: (accessToken: string, user: AuthUser, onLogout: () => Promise<void>) => React.ReactNode }) {
+export default function AuthGate({ children }: { children: (user: AuthUser, onLogout: () => Promise<void>) => ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -26,8 +35,7 @@ export default function AuthGate({ children }: { children: (accessToken: string,
 
   useEffect(() => {
     let active = true;
-    fetch(`${API_BASE}/auth/refresh`, { method: 'POST', credentials: 'include' })
-      .then(async (response) => ({ ok: response.ok, payload: await response.json() as AuthResponse }))
+    restoreSession()
       .then(({ ok, payload }) => { if (active && ok) acceptSession(payload); })
       .catch(() => { /* An unauthenticated visitor is expected on first load. */ })
       .finally(() => { if (active) setLoading(false); });
@@ -60,7 +68,7 @@ export default function AuthGate({ children }: { children: (accessToken: string,
   };
 
   if (loading) return <div className="auth-loading"><span className="auth-spinner" /><p>Preparing your secure workspace…</p></div>;
-  if (accessToken && user) return <>{children(accessToken, user, logout)}</>;
+  if (accessToken && user) return <>{children(user, logout)}</>;
 
   return <main className="auth-screen">
     <section className="auth-story">
