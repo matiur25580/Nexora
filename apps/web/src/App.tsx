@@ -1,6 +1,6 @@
 import {
   Activity, ArrowUpRight, Bell, Building2, ChartNoAxesCombined, CircleHelp,
-  Command, CreditCard, LayoutDashboard, LifeBuoy, Search, Settings2, ShieldCheck,
+  Command, CreditCard, LayoutDashboard, LifeBuoy, LogOut, Search, Settings2, ShieldCheck,
   Users, Zap
 } from 'lucide-react';
 
@@ -15,7 +15,7 @@ const nav = [
   ['Product adoption', Activity], ['Renewals & revenue', CreditCard], ['Automation', Zap]
 ] as const;
 
-export default function App() {
+export default function App({ user, onLogout }: { user: { displayName: string; email: string }; onLogout: () => Promise<void> }) {
   return <div className="shell">
     <aside className="sidebar">
       <a className="brand" href="/"><span className="brand-mark"><Command size={19}/></span>Nexora<span className="brand-dot">.</span></a>
@@ -25,10 +25,10 @@ export default function App() {
       <p className="nav-label">ADMINISTRATION</p>
       <a className="nav-item" href="#"><ShieldCheck size={17}/>Governance</a>
       <a className="nav-item" href="#"><Settings2 size={17}/>Settings</a>
-      <div className="sidebar-bottom"><div className="help"><CircleHelp size={18}/><span><b>Need a hand?</b><small>Explore the platform guide</small></span></div><div className="profile"><span className="avatar">NR</span><span><b>Nexora Preview</b><small>Milestone 1 foundation</small></span></div></div>
+      <div className="sidebar-bottom"><div className="help"><CircleHelp size={18}/><span><b>Need a hand?</b><small>Explore the platform guide</small></span></div><div className="profile"><span className="avatar">{user.displayName.split(/\\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</span><span><b>{user.displayName}</b><small>{user.email}</small></span></div></div>
     </aside>
     <main className="main">
-      <header className="topbar"><div className="crumb">Workspace <span>/</span> <b>Overview</b></div><div className="top-actions"><button aria-label="Search"><Search size={18}/></button><button aria-label="Notifications" className="bell"><Bell size={18}/></button><span className="avatar top-avatar">NR</span></div></header>
+      <header className="topbar"><div className="crumb">Workspace <span>/</span> <b>Overview</b></div><div className="top-actions"><button aria-label="Search"><Search size={18}/></button><button aria-label="Notifications" className="bell"><Bell size={18}/></button><span className="current-user">{user.displayName}</span><button className="signout" onClick={() => void onLogout()} aria-label="Sign out"><LogOut size={16}/><span>Sign out</span></button></div></header>
       <section className="content">
         <div className="welcome"><div><p className="eyebrow">CUSTOMER INTELLIGENCE</p><h1>Good morning, welcome to Nexora.</h1><p className="muted">Your customer relationships, connected to the outcomes that matter.</p></div><span className="preview-tag"><Activity size={15}/> Foundation preview</span></div>
         <div className="banner"><span className="banner-icon"><ShieldCheck size={21}/></span><div><b>Your workspace foundation is taking shape</b><p>Connect your organization and customer data as upcoming milestones become available.</p></div><span className="status"><i/> Initial setup</span></div>
