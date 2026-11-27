@@ -23,12 +23,12 @@ const publicUser = (user: { _id: Types.ObjectId; email: string; displayName: str
 const issueSession = async (userId: Types.ObjectId, req: import('express').Request, res: import('express').Response) => {
   const refreshToken = createRefreshToken();
   const expiresAt = new Date(Date.now() + env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
-  await Session.create({
+  const session = await Session.create({
     userId, tokenHash: hashRefreshToken(refreshToken), expiresAt,
     userAgent: req.get('user-agent')?.slice(0, 500), ipAddress: req.ip
   });
   setRefreshCookie(res, refreshToken);
-  return createAccessToken(String(userId));
+  return { accessToken: await createAccessToken(String(userId)), sessionId: session._id };
 };
 
 authRouter.post('/register', authLimiter, async (req, res) => {
@@ -46,8 +46,8 @@ authRouter.post('/register', authLimiter, async (req, res) => {
     email: parsed.data.email, displayName: parsed.data.displayName,
     passwordHash: await hashPassword(parsed.data.password)
   });
-  const accessToken = await issueSession(user._id, req, res);
-  res.status(201).json({ data: { user: publicUser(user), accessToken } });
+  const session = await issueSession(user._id, req, res);
+  res.status(201).json({ data: { user: publicUser(user), accessToken: session.accessToken } });
 });
 
 authRouter.post('/login', authLimiter, async (req, res) => {
@@ -63,8 +63,8 @@ authRouter.post('/login', authLimiter, async (req, res) => {
   }
   user.lastLoginAt = new Date();
   await user.save();
-  const accessToken = await issueSession(user._id, req, res);
-  res.status(200).json({ data: { user: publicUser(user), accessToken } });
+  const session = await issueSession(user._id, req, res);
+  res.status(200).json({ data: { user: publicUser(user), accessToken: session.accessToken } });
 });
 
 authRouter.post('/refresh', async (req, res) => {
@@ -90,8 +90,10 @@ authRouter.post('/refresh', async (req, res) => {
     res.status(401).json({ error: { code: 'SESSION_USER_UNAVAILABLE', message: 'The account is not available.' } });
     return;
   }
-  const accessToken = await issueSession(user._id, req, res);
-  res.status(200).json({ data: { user: publicUser(user), accessToken } });
+  const replacement = await issueSession(user._id, req, res);
+  oldSession.replacedBySessionId = replacement.sessionId;
+  await oldSession.save();
+  res.status(200).json({ data: { user: publicUser(user), accessToken: replacement.accessToken } });
 });
 
 authRouter.post('/logout', async (req, res) => {
