@@ -4,15 +4,24 @@
 
 Nexora is a multi-tenant SaaS platform for customer lifecycle management, customer health intelligence, product adoption, retention workflows, and revenue operations.
 
-> Status: Milestone 1 — Enterprise Foundation (in progress)
+> Status: Milestone 2 — Enterprise Authentication & Session Lifecycle (in progress)
 
 ## Product direction
 
 Nexora brings customer accounts, subscriptions, product usage, support activity, feedback, renewal signals, and customer-success workflows into one operational workspace. Its design priorities are explainability, tenant isolation, auditability, and measurable business outcomes.
 
+## Current capabilities
+
+- TypeScript monorepo with React/Vite web application and Express/Mongoose API
+- Environment validation, structured request logging, centralized errors, Docker and CI
+- User registration and login with scrypt password hashing
+- Short-lived signed access tokens and rotating opaque refresh sessions
+- HttpOnly refresh-token cookie, server-side token digests, session revocation and expiry
+- Protected current-user endpoint and rate-limited authentication entry points
+
 ## Planned capabilities
 
-- Organization workspaces, identity, membership, and permission policies
+- Organization workspaces, membership, and granular permission policies
 - Customer 360 profiles and lifecycle timelines
 - Explainable customer health scoring and retention signals
 - Product usage event ingestion and adoption analytics
@@ -23,7 +32,7 @@ Nexora brings customer accounts, subscriptions, product usage, support activity,
 
 ## Architecture
 
-The initial implementation is a TypeScript modular monolith:
+The implementation is a TypeScript modular monolith:
 
 - `apps/api`: Node.js, Express, Mongoose, Zod, structured logging
 - `apps/web`: React, Vite, TypeScript, responsive application shell
@@ -31,7 +40,7 @@ The initial implementation is a TypeScript modular monolith:
 - Docker Compose: local development services
 - GitHub Actions: continuous integration
 
-Domain modules will be introduced incrementally. The initial foundation intentionally avoids premature microservices and unverified AI/predictive claims.
+Domain modules will be introduced incrementally. Nexora intentionally avoids premature microservices and unverified AI/predictive claims.
 
 ## Development
 
@@ -39,7 +48,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/ARCHITECTURE.md](./docs/ARCHITEC
 
 ## Security
 
-Never commit secrets. Copy `.env.example` to `.env` for local development. Tenant context must ultimately be derived from authenticated membership and enforced server-side; client-supplied organization identifiers are never authorization evidence.
+Never commit secrets. Copy `.env.example` to `.env` and replace the development-only secret. In production, set a unique high-entropy `ACCESS_TOKEN_SECRET` and enable secure cookies behind HTTPS. Tenant context must be derived from authenticated membership and enforced server-side; client-supplied organization identifiers are never authorization evidence.
 
 ## License
 
