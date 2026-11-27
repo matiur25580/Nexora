@@ -32,25 +32,19 @@ export const verifyPassword = async (password: string, encoded: string): Promise
   const [algorithm, n, r, p, saltValue, hashValue] = encoded.split('$');
   if (algorithm !== 'scrypt' || !n || !r || !p || !saltValue || !hashValue) return false;
 
-  const cost = Number(n);
-  const blockSize = Number(r);
-  const parallelization = Number(p);
   if (
-    !Number.isSafeInteger(cost) ||
-    !Number.isSafeInteger(blockSize) ||
-    !Number.isSafeInteger(parallelization) ||
-    cost <= 0 ||
-    blockSize <= 0 ||
-    parallelization <= 0
+    Number(n) !== COST ||
+    Number(r) !== BLOCK_SIZE ||
+    Number(p) !== PARALLELIZATION
   ) {
     return false;
   }
 
   const expected = Buffer.from(hashValue, 'base64url');
-  if (expected.length === 0) return false;
+  if (expected.length !== KEY_LENGTH) return false;
 
   const salt = Buffer.from(saltValue, 'base64url');
-  if (salt.length === 0) return false;
+  if (salt.length !== 16) return false;
 
   const actual = await deriveKey(password, salt, expected.length);
   return actual.length === expected.length && timingSafeEqual(actual, expected);
