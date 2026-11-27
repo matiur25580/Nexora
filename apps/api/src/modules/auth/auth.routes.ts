@@ -91,8 +91,7 @@ authRouter.post('/refresh', async (req, res) => {
     return;
   }
   const replacement = await issueSession(user._id, req, res);
-  oldSession.replacedBySessionId = replacement.sessionId;
-  await oldSession.save();
+  await Session.updateOne({ _id: oldSession._id }, { $set: { replacedBySessionId: replacement.sessionId } });
   res.status(200).json({ data: { user: publicUser(user), accessToken: replacement.accessToken } });
 });
 
