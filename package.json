@@ -1,0 +1,24 @@
+{
+  "name": "nexora",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Enterprise Customer Success & Revenue Intelligence Platform",
+  "engines": { "node": ">=22" },
+  "workspaces": ["apps/api", "apps/web"],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm run dev --workspace @nexora/api",
+    "dev:web": "npm run dev --workspace @nexora/web",
+    "build": "npm run build --workspace @nexora/api && npm run build --workspace @nexora/web",
+    "typecheck": "npm run typecheck --workspace @nexora/api && npm run typecheck --workspace @nexora/web",
+    "test": "npm run test --workspace @nexora/api && npm run test --workspace @nexora/web",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.19.0", "@types/node": "^22.13.4", "concurrently": "^9.1.2",
+    "eslint": "^9.19.0", "eslint-config-prettier": "^10.0.1", "globals": "^15.14.0",
+    "prettier": "^3.5.0", "typescript": "^5.7.3", "typescript-eslint": "^8.24.0"
+  }
+}
