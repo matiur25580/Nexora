@@ -10,8 +10,10 @@ const cookieOptions: CookieOptions = {
   maxAge: env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000
 };
 
-export const setRefreshCookie = (res: Response, token: string): void =>
+export const setRefreshCookie = (res: Response, token: string): void => {
   res.cookie(refreshCookieName, token, cookieOptions);
+};
 
-export const clearRefreshCookie = (res: Response): void =>
+export const clearRefreshCookie = (res: Response): void => {
   res.clearCookie(refreshCookieName, { ...cookieOptions, maxAge: undefined });
+};
