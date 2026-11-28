@@ -46,6 +46,13 @@ Domain modules will be introduced incrementally. Nexora intentionally avoids pre
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), and [docs/ROADMAP.md](./docs/ROADMAP.md).
 
+## Delivered capabilities
+
+- Secure account registration and login with password hashing, short-lived access tokens and rotating refresh sessions.
+- Organization creation and switching, active membership verification, role-based member administration and organization audit events (M3 branch).
+
+See [docs/ORGANIZATIONS.md](docs/ORGANIZATIONS.md) for the tenant and role security model.
+
 ## Security
 
 Never commit secrets. Copy `.env.example` to `.env` and generate a unique signing secret (for example, `openssl rand -base64 48`) for `ACCESS_TOKEN_SECRET`; the API refuses to start without an explicit value. Docker Compose also requires it. In production, use a separately generated high-entropy secret and enable secure cookies behind HTTPS. Tenant context must be derived from authenticated membership and enforced server-side; client-supplied organization identifiers are never authorization evidence.
