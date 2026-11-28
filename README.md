@@ -48,7 +48,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md), [docs/ARCHITECTURE.md](./docs/ARCHITEC
 
 ## Security
 
-Never commit secrets. Copy `.env.example` to `.env` and replace the development-only secret. In production, set a unique high-entropy `ACCESS_TOKEN_SECRET` and enable secure cookies behind HTTPS. Tenant context must be derived from authenticated membership and enforced server-side; client-supplied organization identifiers are never authorization evidence.
+Never commit secrets. Copy `.env.example` to `.env` and generate a unique signing secret (for example, `openssl rand -base64 48`) for `ACCESS_TOKEN_SECRET`; the API refuses to start without an explicit value. Docker Compose also requires it. In production, use a separately generated high-entropy secret and enable secure cookies behind HTTPS. Tenant context must be derived from authenticated membership and enforced server-side; client-supplied organization identifiers are never authorization evidence.
 
 ## License
 
