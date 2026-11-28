@@ -12,6 +12,7 @@ import { requireAuth } from './auth.middleware.js';
 
 export const authRouter = Router();
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false });
+const sessionLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false });
 const cookieValue = (header: string | undefined, name: string): string | undefined => {
   const entry = header?.split(';').map((part) => part.trim()).find((part) => part.startsWith(`${name}=`));
   if (!entry) return undefined;
@@ -37,7 +38,7 @@ authRouter.post('/register', authLimiter, async (req, res) => {
     res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Please check the registration details.', details: parsed.error.flatten().fieldErrors } });
     return;
   }
-  const existing = await User.exists({ email: parsed.data.email });
+  const existing = await User.exists({ email: { $eq: String(parsed.data.email) } });
   if (existing) {
     res.status(409).json({ error: { code: 'EMAIL_ALREADY_REGISTERED', message: 'An account with this email already exists.' } });
     return;
@@ -56,7 +57,7 @@ authRouter.post('/login', authLimiter, async (req, res) => {
     res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Please provide a valid email and password.' } });
     return;
   }
-  const user = await User.findOne({ email: parsed.data.email }).select('+passwordHash');
+  const user = await User.findOne({ email: { $eq: String(parsed.data.email) } }).select('+passwordHash');
   if (!user || user.status !== 'active' || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
     res.status(401).json({ error: { code: 'INVALID_CREDENTIALS', message: 'Email or password is incorrect.' } });
     return;
@@ -67,7 +68,7 @@ authRouter.post('/login', authLimiter, async (req, res) => {
   res.status(200).json({ data: { user: publicUser(user), accessToken: session.accessToken } });
 });
 
-authRouter.post('/refresh', async (req, res) => {
+authRouter.post('/refresh', sessionLimiter, async (req, res) => {
   const token = cookieValue(req.headers.cookie, refreshCookieName);
   if (!token) {
     clearRefreshCookie(res);
@@ -95,7 +96,7 @@ authRouter.post('/refresh', async (req, res) => {
   res.status(200).json({ data: { user: publicUser(user), accessToken: replacement.accessToken } });
 });
 
-authRouter.post('/logout', async (req, res) => {
+authRouter.post('/logout', sessionLimiter, async (req, res) => {
   const token = cookieValue(req.headers.cookie, refreshCookieName);
   if (token) {
     await Session.updateOne(
@@ -107,6 +108,6 @@ authRouter.post('/logout', async (req, res) => {
   res.status(200).json({ data: { loggedOut: true } });
 });
 
-authRouter.get('/me', requireAuth, (req, res) => {
+authRouter.get('/me', sessionLimiter, requireAuth, (req, res) => {
   res.status(200).json({ data: { user: req.authUser } });
 });
