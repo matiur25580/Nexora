@@ -9,7 +9,19 @@ const envSchema = z.object({
   API_HOST: z.string().default('0.0.0.0'),
   WEB_ORIGIN: z.string().default('http://localhost:5173'),
   MONGODB_URI: z.string().min(1).default('mongodb://localhost:27017/nexora'),
+  ACCESS_TOKEN_SECRET: z.string().min(32),
+  ACCESS_TOKEN_TTL: z.string().default('15m'),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(30),
+  COOKIE_SECURE: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info')
+}).superRefine((value, context) => {
+  if (value.NODE_ENV === 'production' && !value.COOKIE_SECURE) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'COOKIE_SECURE must be true in production so refresh cookies are sent only over HTTPS',
+      path: ['COOKIE_SECURE']
+    });
+  }
 });
 
 const parsed = envSchema.safeParse(process.env);

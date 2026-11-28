@@ -2,8 +2,8 @@
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M1 | Monorepo foundation, API shell, web shell, environment, Docker, CI, tests, docs | In progress |
-| M2 | Enterprise authentication and session lifecycle | Planned |
+| M1 | Monorepo foundation, API shell, web shell, environment, Docker, CI, tests, docs | Complete |
+| M2 | Enterprise authentication and session lifecycle | In progress |
 | M3 | Organizations, membership, roles, permission policies, tenant isolation | Planned |
 | M4 | Customer 360 and account lifecycle | Planned |
 | M5 | Explainable customer health scoring | Planned |
