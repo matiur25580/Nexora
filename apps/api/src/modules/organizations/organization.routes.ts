@@ -45,7 +45,7 @@ organizationRouter.post('/', async (req, res, next) => {
     await audit(organization._id, actor(req), 'organization.created', 'organization', String(organization._id), { slug });
     res.status(201).json({ data: { id: String(organization._id), name: organization.name, slug: organization.slug, role: 'owner' } });
   } catch (error) {
-    if (organizationId) await Organization.deleteOne({ _id: organizationId }).catch(() => undefined);
+    if (organizationId) await Promise.all([Membership.deleteMany({ organizationId }), Organization.deleteOne({ _id: organizationId })]).catch(() => undefined);
     if (duplicate(error)) { res.status(409).json({ error: { code: 'ORGANIZATION_CONFLICT', message: 'An organization with this identifier already exists.' } }); return; }
     next(error);
   }
@@ -85,9 +85,16 @@ organizationRouter.post('/:organizationId/members', requireOrganization, require
     const user = await User.findOne({ email: parsed.data.email, status: 'active' }).select('_id email displayName').lean();
     if (!user) { res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'The user must register before being added to this organization.' } }); return; }
     const organizationId = new Types.ObjectId(req.organizationContext!.id);
-    const membership = await Membership.create({ organizationId, userId: user._id, role: parsed.data.role, status: 'active', createdBy: actor(req) });
-    await audit(organizationId, actor(req), 'membership.created', 'membership', String(membership._id), { role: membership.role, invitedUserId: String(user._id) });
-    res.status(201).json({ data: { id: String(membership._id), user: { id: String(user._id), email: user.email, displayName: user.displayName }, role: membership.role, status: membership.status } });
+    const existing = await Membership.findOne({ organizationId, userId: user._id });
+    if (existing && existing.status !== 'removed') {
+      res.status(409).json({ error: { code: 'MEMBERSHIP_EXISTS', message: 'This user already has an active or suspended membership in the organization.' } }); return;
+    }
+    const membership = existing
+      ? Object.assign(existing, { role: parsed.data.role, status: 'active' as const })
+      : await Membership.create({ organizationId, userId: user._id, role: parsed.data.role, status: 'active', createdBy: actor(req) });
+    if (existing) await membership.save();
+    await audit(organizationId, actor(req), existing ? 'membership.reactivated' : 'membership.created', 'membership', String(membership._id), { role: membership.role, memberUserId: String(user._id) });
+    res.status(existing ? 200 : 201).json({ data: { id: String(membership._id), user: { id: String(user._id), email: user.email, displayName: user.displayName }, role: membership.role, status: membership.status } });
   } catch (error) {
     if (duplicate(error)) { res.status(409).json({ error: { code: 'MEMBERSHIP_EXISTS', message: 'This user already has a membership in the organization.' } }); return; }
     next(error);
