@@ -17,6 +17,9 @@ jobs:
   quality:
     name: Typecheck, tests and build
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      ACCESS_TOKEN_SECRET: ci-only-ephemeral-signing-secret-32-bytes-minimum
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
