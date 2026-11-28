@@ -10,7 +10,7 @@ import { createAccessToken, createRefreshToken, hashRefreshToken } from './token
 import { clearRefreshCookie, refreshCookieName, setRefreshCookie } from './refresh-cookie.js';
 import { requireAuth } from './auth.middleware.js';
 import { Membership } from '../organizations/membership.model.js';
-import { Organization } from '../organizations/organization.model.js';
+import '../organizations/organization.model.js';
 
 export const authRouter = Router();
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false });
