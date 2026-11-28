@@ -13,11 +13,23 @@ const envSchema = z.object({
   ACCESS_TOKEN_SECRET: z.string().min(32).default(developmentSecret),
   ACCESS_TOKEN_TTL: z.string().default('15m'),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(30),
-  COOKIE_SECURE: z.string().default('false').transform((value) => value === 'true'),
+  COOKIE_SECURE: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info')
-}).refine((value) => value.NODE_ENV !== 'production' || value.ACCESS_TOKEN_SECRET !== developmentSecret, {
-  message: 'ACCESS_TOKEN_SECRET must be set to a unique production secret',
-  path: ['ACCESS_TOKEN_SECRET']
+}).superRefine((value, context) => {
+  if (value.NODE_ENV === 'production' && value.ACCESS_TOKEN_SECRET === developmentSecret) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'ACCESS_TOKEN_SECRET must be set to a unique production secret',
+      path: ['ACCESS_TOKEN_SECRET']
+    });
+  }
+  if (value.NODE_ENV === 'production' && !value.COOKIE_SECURE) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'COOKIE_SECURE must be true in production so refresh cookies are sent only over HTTPS',
+      path: ['COOKIE_SECURE']
+    });
+  }
 });
 
 const parsed = envSchema.safeParse(process.env);
