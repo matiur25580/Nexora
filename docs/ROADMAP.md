@@ -2,9 +2,9 @@
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M1 | Monorepo foundation, API shell, web shell, environment, Docker, CI, tests, docs | Complete |
-| M2 | Enterprise authentication and session lifecycle | In progress |
-| M3 | Organizations, membership, roles, permission policies, tenant isolation | Planned |
+| M1 | Monorepo foundation, API shell, web shell, environment, Docker, CI, tests, docs | Complete — integrated on main |
+| M2 | Enterprise authentication, password hashing, access tokens, refresh rotation and session lifecycle | Complete — integrated on main |
+| M3 | Organization workspaces, memberships, role permissions, tenant isolation and audit events | In progress — feat/milestone-3-organization-workspaces |
 | M4 | Customer 360 and account lifecycle | Planned |
 | M5 | Explainable customer health scoring | Planned |
 | M6 | Customer onboarding and journey management | Planned |
@@ -19,4 +19,4 @@
 | M15 | Executive intelligence and governance | Planned |
 | M16 | Security hardening, performance validation, deployment, and release documentation | Planned |
 
-A milestone is complete only when implementation, automated tests, security checks, documentation, and review criteria are satisfied.
+M3 acceptance requires organization creation, active membership checks, explicit role permissions, cross-tenant access denial, audit attribution, API/UI tests, documentation, and CI validation. A milestone is complete only after review and integration into its prerequisite branch.

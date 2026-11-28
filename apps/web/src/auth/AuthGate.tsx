@@ -15,7 +15,7 @@ const restoreSession = () => {
   return refreshRequest;
 };
 
-export default function AuthGate({ children }: { children: (user: AuthUser, onLogout: () => Promise<void>) => ReactNode }) {
+export default function AuthGate({ children }: { children: (user: AuthUser, accessToken: string, onAccessTokenChange: (token: string) => void, onLogout: () => Promise<void>) => ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -68,7 +68,7 @@ export default function AuthGate({ children }: { children: (user: AuthUser, onLo
   };
 
   if (loading) return <div className="auth-loading"><span className="auth-spinner" /><p>Preparing your secure workspace…</p></div>;
-  if (accessToken && user) return <>{children(user, logout)}</>;
+  if (accessToken && user) return <>{children(user, accessToken, setAccessToken, logout)}</>;
 
   return <main className="auth-screen">
     <section className="auth-story">
@@ -86,7 +86,7 @@ export default function AuthGate({ children }: { children: (user: AuthUser, onLo
         <span className="auth-mobile-brand"><Command size={17}/> Nexora</span>
         <p className="auth-eyebrow">{mode === 'login' ? 'WELCOME BACK' : 'GET STARTED'}</p>
         <h2>{mode === 'login' ? 'Sign in to your workspace' : 'Create your Nexora account'}</h2>
-        <p className="auth-subtitle">{mode === 'login' ? 'Enter your details to continue.' : 'Start with your personal account. Organization workspaces arrive in the next milestone.'}</p>
+        <p className="auth-subtitle">{mode === 'login' ? 'Enter your details to continue.' : 'Create your personal account, then establish or join an organization workspace.'}</p>
         <form onSubmit={submit}>
           {mode === 'register' && <label className="auth-field"><span>Full name</span><div><UserRound size={17}/><input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name" autoComplete="name" minLength={2} maxLength={100} required /></div></label>}
           <label className="auth-field"><span>Email address</span><div><Mail size={17}/><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" autoComplete="email" required /></div></label>

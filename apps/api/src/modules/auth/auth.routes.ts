@@ -9,6 +9,8 @@ import { hashPassword, verifyPassword } from './password.js';
 import { createAccessToken, createRefreshToken, hashRefreshToken } from './tokens.js';
 import { clearRefreshCookie, refreshCookieName, setRefreshCookie } from './refresh-cookie.js';
 import { requireAuth } from './auth.middleware.js';
+import { Membership } from '../organizations/membership.model.js';
+import '../organizations/organization.model.js';
 
 export const authRouter = Router();
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false });
@@ -108,6 +110,8 @@ authRouter.post('/logout', sessionLimiter, async (req, res) => {
   res.status(200).json({ data: { loggedOut: true } });
 });
 
-authRouter.get('/me', sessionLimiter, requireAuth, (req, res) => {
-  res.status(200).json({ data: { user: req.authUser } });
+authRouter.get('/me', sessionLimiter, requireAuth, async (req, res) => {
+  const memberships = await Membership.find({ userId: req.authUser!.id, status: 'active' }).populate('organizationId', 'name slug status').lean();
+  const organizations = memberships.flatMap(item => { const organization = item.organizationId as unknown as { _id: Types.ObjectId; name: string; slug: string; status: string } | null; return organization?.status === 'active' ? [{ id: String(organization._id), name: organization.name, slug: organization.slug, role: item.role }] : []; });
+  res.status(200).json({ data: { user: req.authUser, organizations } });
 });
