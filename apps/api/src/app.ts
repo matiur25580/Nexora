@@ -7,6 +7,7 @@ import { notFoundHandler } from './middleware/not-found.js';
 import { logger } from './lib/logger.js';
 import { healthRouter } from './routes/health.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
+import { organizationRouter } from './modules/organizations/organization.routes.js';
 
 export const app = express();
 app.disable('x-powered-by');
@@ -42,5 +43,6 @@ app.get('/api/v1', (_req, res) => {
 });
 app.use('/api/v1/health', healthRouter);
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/organizations', organizationRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
