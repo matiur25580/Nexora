@@ -45,3 +45,15 @@ Nexora starts as a modular monolith to keep local development and deployment app
 - Health responses expose process and dependency state.
 - Background jobs use idempotency keys, bounded retries, and observable failure states.
 - External webhook delivery is authenticated, rate-limited, and replay-resistant.
+
+
+## Organization tenancy (Milestone 3)
+
+- A user may belong to multiple organizations through Membership records.
+- Organization IDs in route paths are selectors only; the API checks the authenticated user's active membership before returning organization data.
+- The server attaches a verified organization context only after checking both the membership and active organization record.
+- Role permissions are resolved by a server-owned matrix. The client cannot submit a role or membership status as an authorization claim.
+- Owner membership is protected from removal or role change. Ownership transfer is deferred until a dedicated two-party workflow exists.
+- Member addition currently supports already-registered Nexora users; invitation delivery is not implemented.
+- Membership removal is soft (status=removed), and a removed member can be reactivated after a new authorization check.
+- Organization/member changes create organization-scoped audit events.
