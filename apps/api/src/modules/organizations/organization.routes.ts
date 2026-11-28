@@ -24,9 +24,7 @@ const memberView = (membership: any) => ({
 organizationRouter.get('/', async (req, res, next) => {
   try {
     const memberships = await Membership.find({ userId: req.authUser!.id, status: 'active' }).populate('organizationId', 'name slug status').lean();
-    const data = memberships.filter(item => item.organizationId && typeof item.organizationId === 'object' && item.organizationId.status === 'active').map(item => ({
-      id: String((item.organizationId as any)._id), name: (item.organizationId as any).name, slug: (item.organizationId as any).slug, role: item.role
-    }));
+    const data = memberships.flatMap(item => { const organization = item.organizationId as unknown as { _id: Types.ObjectId; name: string; slug: string; status: string } | null; return organization?.status === 'active' ? [{ id: String(organization._id), name: organization.name, slug: organization.slug, role: item.role }] : []; });
     res.status(200).json({ data });
   } catch (error) { next(error); }
 });
@@ -103,10 +101,11 @@ organizationRouter.post('/:organizationId/members', requireOrganization, require
 
 organizationRouter.patch('/:organizationId/members/:membershipId', requireOrganization, requirePermission('members:write'), async (req, res, next) => {
   const parsed = updateMemberRoleSchema.safeParse(req.body);
-  if (!parsed.success || !Types.ObjectId.isValid(req.params.membershipId)) { res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'A valid membership and role are required.' } }); return; }
+  const membershipId = String(req.params.membershipId ?? '');
+  if (!parsed.success || !Types.ObjectId.isValid(membershipId)) { res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'A valid membership and role are required.' } }); return; }
   if (!canAssignRole(req.organizationContext!.role, parsed.data.role)) { res.status(403).json({ error: { code: 'ROLE_GRANT_DENIED', message: 'Only an owner can grant admin access.' } }); return; }
   try {
-    const membership = await Membership.findOne({ _id: req.params.membershipId, organizationId: req.organizationContext!.id, status: 'active' });
+    const membership = await Membership.findOne({ _id: membershipId, organizationId: req.organizationContext!.id, status: 'active' });
     if (!membership) { res.status(404).json({ error: { code: 'MEMBERSHIP_NOT_FOUND', message: 'The active membership was not found.' } }); return; }
     if (membership.role === 'owner') { res.status(409).json({ error: { code: 'OWNER_ROLE_PROTECTED', message: 'Owner membership cannot be changed in this milestone.' } }); return; }
     const previousRole = membership.role;
@@ -118,7 +117,8 @@ organizationRouter.patch('/:organizationId/members/:membershipId', requireOrgani
 });
 
 organizationRouter.delete('/:organizationId/members/:membershipId', requireOrganization, requirePermission('members:write'), async (req, res, next) => {
-  if (!Types.ObjectId.isValid(req.params.membershipId)) { res.status(400).json({ error: { code: 'INVALID_MEMBERSHIP_ID', message: 'A valid membership identifier is required.' } }); return; }
+  const membershipId = String(req.params.membershipId ?? '');
+  if (!Types.ObjectId.isValid(membershipId)) { res.status(400).json({ error: { code: 'INVALID_MEMBERSHIP_ID', message: 'A valid membership identifier is required.' } }); return; }
   try {
     const membership = await Membership.findOne({ _id: req.params.membershipId, organizationId: req.organizationContext!.id, status: 'active' });
     if (!membership) { res.status(404).json({ error: { code: 'MEMBERSHIP_NOT_FOUND', message: 'The active membership was not found.' } }); return; }
